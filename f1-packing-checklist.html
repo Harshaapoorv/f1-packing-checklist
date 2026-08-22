@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1 Packing Checklist</title>
+<style>
+  :root{
+    --ink:#1c2321;
+    --paper:#f6f4ee;
+    --card:#ffffff;
+    --line:#e2ddd0;
+    --accent:#1e4d3f;
+    --accent-soft:#e4efe9;
+    --gold:#b8863f;
+    --muted:#7a7468;
+    --done:#9aa89f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Georgia','Times New Roman',serif;
+    background:var(--paper);
+    color:var(--ink);
+    padding-bottom:80px;
+  }
+  header{
+    padding:28px 20px 18px;
+    border-bottom:2px solid var(--ink);
+    position:sticky;
+    top:0;
+    background:var(--paper);
+    z-index:10;
+  }
+  header h1{
+    margin:0 0 4px;
+    font-size:1.5rem;
+    letter-spacing:0.02em;
+  }
+  header p{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:0.8rem;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+  .progress-wrap{
+    margin-top:14px;
+  }
+  .progress-track{
+    height:6px;
+    background:var(--line);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--accent);
+    width:0%;
+    transition:width .3s ease;
+  }
+  .progress-label{
+    margin-top:6px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:0.78rem;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+  .tabs{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding:12px 20px;
+    background:var(--paper);
+    position:sticky;
+    top:96px;
+    z-index:9;
+    border-bottom:1px solid var(--line);
+    -webkit-overflow-scrolling:touch;
+  }
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{
+    flex:0 0 auto;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:0.75rem;
+    letter-spacing:0.03em;
+    padding:8px 14px;
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:var(--card);
+    color:var(--muted);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .tab.active{
+    background:var(--ink);
+    color:var(--paper);
+    border-color:var(--ink);
+  }
+  main{
+    padding:16px 20px 40px;
+    max-width:640px;
+    margin:0 auto;
+  }
+  .section{
+    margin-bottom:28px;
+  }
+  .section-title{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:1px solid var(--ink);
+    padding-bottom:6px;
+    margin-bottom:10px;
+  }
+  .section-title h2{
+    margin:0;
+    font-size:1.05rem;
+    letter-spacing:0.03em;
+  }
+  .section-count{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:0.72rem;
+    color:var(--muted);
+  }
+  .item{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:11px 4px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .item:active{background:var(--accent-soft);}
+  .checkbox{
+    flex:0 0 22px;
+    width:22px;
+    height:22px;
+    border:1.5px solid var(--ink);
+    border-radius:5px;
+    margin-top:2px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all .15s ease;
+  }
+  .checkbox.checked{
+    background:var(--accent);
+    border-color:var(--accent);
+  }
+  .checkbox svg{
+    width:13px;
+    height:13px;
+    opacity:0;
+    transition:opacity .15s ease;
+  }
+  .checkbox.checked svg{opacity:1;}
+  .item-body{flex:1;min-width:0;}
+  .item-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:baseline;
+  }
+  .item-name{
+    font-size:0.98rem;
+    line-height:1.3;
+  }
+  .item.done .item-name{
+    color:var(--done);
+    text-decoration:line-through;
+  }
+  .item-qty{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:0.72rem;
+    color:var(--gold);
+    white-space:nowrap;
+    flex:0 0 auto;
+  }
+  .item.done .item-qty{color:var(--done);}
+  .item-note{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:0.76rem;
+    color:var(--muted);
+    margin-top:2px;
+    line-height:1.3;
+  }
+  .item-buy{
+    display:inline-block;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:0.65rem;
+    letter-spacing:0.05em;
+    padding:1px 6px;
+    border-radius:8px;
+    margin-right:6px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    font-weight:600;
+  }
+  .item-buy.us{
+    background:#f2e6d6;
+    color:var(--gold);
+  }
+  footer{
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:var(--card);
+    border-top:1px solid var(--line);
+    padding:12px 20px;
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  footer button{
+    font-size:0.75rem;
+    padding:9px 16px;
+    border-radius:20px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink);
+    cursor:pointer;
+  }
+  footer button:active{background:var(--accent-soft);}
+  .empty-note{
+    text-align:center;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    color:var(--muted);
+    font-size:0.8rem;
+    padding:20px 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>F1 Packing Checklist</h1>
+  <p id="subtitle">Loading&hellip;</p>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label">
+      <span id="progressText">0 / 0 packed</span>
+      <span id="progressPct">0%</span>
+    </div>
+  </div>
+</header>
+
+<div class="tabs" id="tabs"></div>
+
+<main id="main"></main>
+
+<footer>
+  <button id="resetBtn">Reset all</button>
+  <button id="checkedOnlyBtn">Show unpacked only</button>
+</footer>
+
+<script>
+const DATA = [
+  { cat: "Documents", items: [
+    ["Passport","1 org + 3 copies","IN","Also get a passport cover"],
+    ["DS-160 Confirmation","1 org + 3 copies","IN",""],
+    ["Visa Appointment Confirmation","3 copies","IN",""],
+    ["Signed I-20","1 org + 3 copies","IN","Sign and mention the date"],
+    ["SEVIS Fee Receipt","3 copies","IN",""],
+    ["CGI Payment Receipt","1 org + 3 copies","IN",""],
+    ["Finalized Decision Letter","3 copies","IN",""],
+    ["Finalized Mail Acceptance Letter","3 copies","IN",""],
+    ["GRE Scores","3 copies","IN",""],
+    ["English Test Scores","3 copies","IN",""],
+    ["10th Long Memo","1 org + 3 copies","IN",""],
+    ["12th Long Memo","1 org + 3 copies","IN",""],
+    ["Bachelors Semester Transcripts","2 org + 2 copies","IN","Individual semester marksheets, incl. backlogs"],
+    ["PC & CMM Transcripts","2 org + 2 copies","IN",""],
+    ["Bachelors Original Memos","1 org + 2 copies","IN","Individual semester marksheets, incl. backlogs"],
+    ["Original Degree","1 org + 3 copies","IN",""],
+    ["Pay Slips","1 org + 1 copy","IN","If you have work experience"],
+    ["Offer Letter","1 org + 1 copy","IN",""],
+    ["Experience Certificate","1 org + 3 copies","IN",""],
+    ["Loan Confirmation Letter","1 org + 3 copies","IN",""],
+    ["Bank Balance Certificate","1 org + 3 copies","IN",""],
+    ["CA/CE Reports","1 org + 3 copies","IN",""],
+    ["Extra Admits Decision Letters","2 copies","IN","If you have any from other universities"],
+    ["Extra Mail Acceptance Letters","2 copies","IN",""],
+    ["Extra I-20s","2 copies","IN",""],
+    ["Resume","3 copies","IN",""],
+    ["Final SOP","3 copies","IN",""],
+    ["LOR","1 org + 2 copies","IN","If you have access"],
+    ["Visa Copy","3 copies","IN","Visa stamp from your passport"],
+    ["Immunization Forms","1 org + 3 copies","IN","From the university website"],
+    ["International COVID Vaccination Certificate","3 copies","IN","From CoWIN website"],
+    ["Aadhaar Card","1 org + 3 copies","IN",""],
+    ["PAN Card","1 org + 3 copies","IN",""],
+    ["Driving License","1 org + 3 copies","IN",""],
+    ["International Driving Permit","1 org + 3 copies","IN",""],
+    ["Birth Certificate","1 org + 3 copies","IN",""],
+    ["Passport Size Photos","16 pcs","IN",""],
+    ["Flight Tickets","2 copies","IN",""],
+    ["US Address","3 copies","IN","Your immediate US address"],
+    ["Contacts","3 copies","IN","Emergency contacts, in case phone dies"],
+    ["Blank White Papers","3 copies","IN",""],
+    ["Additional Documents","1 org + 3 copies","IN","Other important documents"]
+  ]},
+  { cat: "Clothing", items: [
+    ["T-Shirts","10 pcs","IN",""],
+    ["Shorts","5 pcs","IN","More pants if cool climate, more shorts if warm"],
+    ["Track Pant","8 pcs","IN",""],
+    ["Inner Wear","15 pcs","IN",""],
+    ["Formal Shirts","4 pcs","IN","At least 1 black & 1 white"],
+    ["Jeans","4 pcs","IN","At least 1 solid black"],
+    ["Chinos / Pants","2 pcs","IN","Formal trousers"],
+    ["Joggers","2 pcs","IN",""],
+    ["Formal Suit","1 pair","US","For interviews, formal events"],
+    ["Hoodies","4 pcs","US",""],
+    ["Jacket","1 pc","US","Thick weather-proof jacket"],
+    ["Traditional Wear","2 pairs","IN",""],
+    ["Swim Wear","1 pair","IN","Nylon clothes"],
+    ["Towels","4 pcs","IN",""],
+    ["Hand Towels","2 pcs","IN",""],
+    ["Kerchief","12 pcs","IN",""],
+    ["Belt","2 pcs","IN",""],
+    ["Cap","1 pc","IN",""],
+    ["Muffler","1 pc","US","Bring if you already have"],
+    ["Woolen Cap","1 pc","US",""],
+    ["Gloves","1 pc","US",""],
+    ["Bed Sheet","2 pcs","IN","Prefer king size"],
+    ["Pillow Covers","4 pcs","IN","Large size"],
+    ["Pillow","1 pc","US",""],
+    ["Thick Blanket","1 pc","US",""],
+    ["Thin Blanket","1 pc","IN",""],
+    ["Flip-Flops","2 pairs","IN",""],
+    ["Shoes","2 pairs","IN",""],
+    ["Socks","12 pairs","IN",""],
+    ["Crocs / Floaters","1 pair","IN",""]
+  ]},
+  { cat: "Kitchenware", items: [
+    ["Steel Plates","2 pcs","IN","Prefer lightweight steel"],
+    ["Steel Glasses","2 pcs","IN",""],
+    ["Cooking Pan","1 pc","IN","Prefer induction base"],
+    ["Kadai","1 pc","IN",""],
+    ["Tea / Milk Pot","1 pc","IN",""],
+    ["Pressure Cooker","1 pc","IN","2-3L induction based; extra whistles & gaskets"],
+    ["Microwave Safe Bowl","1 pc","IN",""],
+    ["Microwave Safe Glass","1 pc","IN",""],
+    ["Tea Strainer","1 pc","IN",""],
+    ["Cooking Spoons","4 pcs","IN","Prefer different wooden spoons"],
+    ["Spoons / Forks","6 pcs","IN",""],
+    ["Peeler","1 pc","IN",""],
+    ["Chopping Board","1 pc","IN",""],
+    ["Plastic Chopper","1 pc","IN",""],
+    ["Knives","2 pcs","IN","Pack safely"],
+    ["Scissors","2 pcs","IN",""],
+    ["Water Bottle","1 pc","IN",""],
+    ["Roti Roller (Belan)","1 pc","IN",""],
+    ["Tongs (Patkara)","1 pc","IN",""],
+    ["Skimmer Spoon","1 pc","IN","For deep frying"],
+    ["Grater","1 pc","IN",""],
+    ["Aalu Masher","1 pc","IN",""],
+    ["Dal Masher","1 pc","IN",""]
+  ]},
+  { cat: "Food Items", items: [
+    ["Coriander Powder","500 gms","IN",""],
+    ["Garam Masala","250 gms","IN",""],
+    ["Jeera Powder","250 gms","IN",""],
+    ["Red Chilli Powder","1 kg","IN",""],
+    ["Other Masalas","1 kg","IN",""],
+    ["Ginger Garlic Paste","1 kg","IN",""],
+    ["Ghee","1 kg","IN","Freeze before packing"],
+    ["Pickles","-","IN","Go for double packing"],
+    ["Sweets","-","IN",""],
+    ["Snacks","-","IN",""],
+    ["Instant Food","6 packs","IN","Maggi, masala oats, etc."],
+    ["Pulses / Nuts","-","IN","If you have space and weight"]
+  ]},
+  { cat: "Toiletries", items: [
+    ["Tooth Brush","3 pcs","IN","For initial use, or if you use a specific brand"],
+    ["Tooth Paste","1 pc","IN",""],
+    ["Tongue Cleaner","3 pcs","IN",""],
+    ["Soap","2 pcs","IN",""],
+    ["Soap Case","1 pc","IN",""],
+    ["Comb","1 pc","IN",""],
+    ["Hair Oil","1 pc","IN",""],
+    ["Facewash","1 pc","IN",""],
+    ["Shampoo","1 pc","IN",""],
+    ["Sun Screen","1 pc","IN",""],
+    ["Perfume","1 pc","IN",""],
+    ["Moisturizer","1 pc","IN",""],
+    ["Earbuds","1 pc","IN",""],
+    ["Vaseline","3 pcs","IN",""],
+    ["Lip Balm","3 pcs","IN",""],
+    ["Nail Cutter","3 pcs","IN",""],
+    ["Trimmer","1 pc","IN",""],
+    ["Shaving Kit","1 pc","IN",""]
+  ]},
+  { cat: "Electronics", items: [
+    ["Travel Adaptor","2 pcs","IN","For port conversion"],
+    ["Spike Buster / Extension Cord","1 pc","IN",""],
+    ["Power Bank","1 pc","IN","Under 20,000 mAh"],
+    ["Smart Phone","1 pc","US",""],
+    ["Laptop","1 pc","US",""],
+    ["Earphones","1 pc","US",""],
+    ["Headphones","1 pc","US",""],
+    ["Pendrive","1 pc","US","Do not carry illegal data"],
+    ["External Hard Disk","1 pc","US",""],
+    ["Other Accessories","-","IN","Screen protectors, back case, etc."]
+  ]},
+  { cat: "Medicines", items: [
+    ["Crocin / Dolo 650","1 strip","IN","Fever, cold"],
+    ["Cetirizine","1 strip","IN","Running nose"],
+    ["Ascoril Syrup","1 bottle","IN","Cough"],
+    ["Combiflam","1 strip","IN","Body pain"],
+    ["Erythromycin / Azethral","1 strip","IN","Throat infection"],
+    ["Avomine","1 strip","IN","Vomiting"],
+    ["Cyclopam / Dropar","1 strip","IN","Stomach pain & period cramps"],
+    ["Loperamide / Loparet","1 strip","IN","Diarrhea"],
+    ["Gelucil / Zinetac","1 strip","IN","Indigestion"],
+    ["Diziron","1 strip","IN","Dizziness"],
+    ["Esgypyrin","1 strip","IN","Sprain"],
+    ["Vicks VapoRub","2 pcs","IN","Large size"],
+    ["Vicks Inhaler","4 pcs","IN",""],
+    ["Zandu Balm","2 pcs","IN",""],
+    ["Volini Spray","1 pc","IN",""],
+    ["Zinda Tilismath","2 pcs","IN","Carry doctor's prescription & bill with your name"],
+    ["Band Aid","10 strips","IN",""],
+    ["Cotton","1 pc","IN",""],
+    ["Dettol","1 pc","IN",""]
+  ]},
+  { cat: "Stationary", items: [
+    ["Books","2 pcs","IN",""],
+    ["Pens","5 pcs","IN",""],
+    ["Pencils","5 pcs","IN",""],
+    ["Erasers","3 pcs","IN",""],
+    ["Sharpeners","3 pcs","IN",""],
+    ["Scales","2 pcs","IN",""],
+    ["Stapler","1 pc","IN",""],
+    ["Cello Tape","2 pcs","IN",""],
+    ["Packing Tape","2 pcs","IN",""],
+    ["Files / Folders","3 pcs","IN",""]
+  ]},
+  { cat: "Miscellaneous", items: [
+    ["Spectacles","4 pcs","IN","If you have eyesight"],
+    ["Sun Glasses","1 pc","IN",""],
+    ["Watch","1 pc","IN",""],
+    ["Backpack","1 pc","IN","Prefer a big laptop bag"],
+    ["Wallet","1 pc","IN",""],
+    ["Toothpick","1 pc","IN",""],
+    ["Screw Driver Set","1 pc","IN",""],
+    ["Sewing Kit","1 pc","IN",""],
+    ["Umbrella","1 pc","US","Should withstand snow"],
+    ["Scientific Calculator","1 pc","IN",""],
+    ["Passport Cover","1 pc","IN",""]
+  ]}
+];
+
+const STORAGE_KEY = "f1-packing-checked";
+let checked = {};
+let activeCat = "All";
+let showUnpackedOnly = false;
+
+function itemId(cat, name){
+  return (cat + "::" + name).replace(/\s+/g,"_");
+}
+
+function totalCount(){
+  return DATA.reduce((s,c)=>s+c.items.length,0);
+}
+function checkedCount(){
+  return Object.values(checked).filter(Boolean).length;
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY);
+    if(res && res.value){
+      checked = JSON.parse(res.value);
+    }
+  }catch(e){
+    checked = {};
+  }
+}
+async function saveState(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(checked));
+  }catch(e){
+    console.error("Save failed", e);
+  }
+}
+
+function renderTabs(){
+  const tabs = document.getElementById("tabs");
+  const cats = ["All", ...DATA.map(c=>c.cat)];
+  tabs.innerHTML = "";
+  cats.forEach(cat=>{
+    const btn = document.createElement("div");
+    btn.className = "tab" + (cat===activeCat ? " active" : "");
+    btn.textContent = cat;
+    btn.onclick = ()=>{ activeCat = cat; render(); };
+    tabs.appendChild(btn);
+  });
+}
+
+function render(){
+  renderTabs();
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+  const catsToShow = activeCat === "All" ? DATA : DATA.filter(c=>c.cat===activeCat);
+  let anyRendered = false;
+
+  catsToShow.forEach(cat=>{
+    const visibleItems = cat.items.filter(it=>{
+      const id = itemId(cat.cat, it[0]);
+      if(showUnpackedOnly && checked[id]) return false;
+      return true;
+    });
+    if(visibleItems.length === 0) return;
+    anyRendered = true;
+
+    const section = document.createElement("div");
+    section.className = "section";
+
+    const catDoneCount = cat.items.filter(it=>checked[itemId(cat.cat,it[0])]).length;
+
+    const title = document.createElement("div");
+    title.className = "section-title";
+    title.innerHTML = `<h2>${cat.cat}</h2><span class="section-count">${catDoneCount}/${cat.items.length}</span>`;
+    section.appendChild(title);
+
+    visibleItems.forEach(it=>{
+      const [name, qty, place, note] = it;
+      const id = itemId(cat.cat, name);
+      const isDone = !!checked[id];
+
+      const row = document.createElement("div");
+      row.className = "item" + (isDone ? " done" : "");
+      row.onclick = ()=>{
+        checked[id] = !checked[id];
+        saveState();
+        render();
+      };
+
+      const cb = document.createElement("div");
+      cb.className = "checkbox" + (isDone ? " checked" : "");
+      cb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+      const body = document.createElement("div");
+      body.className = "item-body";
+      const buyBadge = place === "US" ? `<span class="item-buy us">BUY IN US</span>` : `<span class="item-buy">PACK FROM IN</span>`;
+      body.innerHTML = `
+        <div class="item-row">
+          <span class="item-name">${name}</span>
+          <span class="item-qty">${qty}</span>
+        </div>
+        <div class="item-note">${buyBadge}${note ? note : ""}</div>
+      `;
+
+      row.appendChild(cb);
+      row.appendChild(body);
+      section.appendChild(row);
+    });
+
+    main.appendChild(section);
+  });
+
+  if(!anyRendered){
+    const empty = document.createElement("div");
+    empty.className = "empty-note";
+    empty.textContent = "Everything here is packed. Nice work.";
+    main.appendChild(empty);
+  }
+
+  const total = totalCount();
+  const done = checkedCount();
+  const pct = total ? Math.round((done/total)*100) : 0;
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressText").textContent = `${done} / ${total} packed`;
+  document.getElementById("progressPct").textContent = pct + "%";
+  document.getElementById("subtitle").textContent = "For your F1 travel \u2014 tap items as you pack them";
+  document.getElementById("checkedOnlyBtn").textContent = showUnpackedOnly ? "Show all items" : "Show unpacked only";
+}
+
+document.getElementById("resetBtn").onclick = ()=>{
+  if(confirm("Reset all checked items?")){
+    checked = {};
+    saveState();
+    render();
+  }
+};
+document.getElementById("checkedOnlyBtn").onclick = ()=>{
+  showUnpackedOnly = !showUnpackedOnly;
+  render();
+};
+
+(async function init(){
+  await loadState();
+  render();
+})();
+</script>
+
+</body>
+</html>
