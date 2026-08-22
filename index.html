@@ -480,14 +480,33 @@ const DATA = [
 // ====== FIREBASE CONFIG ======
 // Replace this with the config object from your Firebase project
 // (Project settings -> General -> Your apps -> SDK setup and configuration)
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+// const firebaseConfig = {
+//   apiKey: "YOUR_API_KEY",
+//   authDomain: "YOUR_PROJECT.firebaseapp.com",
+//   projectId: "YOUR_PROJECT_ID",
+//   storageBucket: "YOUR_PROJECT.appspot.com",
+//   messagingSenderId: "YOUR_SENDER_ID",
+//   appId: "YOUR_APP_ID"
+// };
+  // <script type="module">
+  // Import the functions you need from the SDKs you need
+  // import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDDfBm8NIu-riVFkkkp8vv3k93QeX4K6fg",
+    authDomain: "f1-packing.firebaseapp.com",
+    databaseURL: "https://f1-packing-default-rtdb.firebaseio.com",
+    projectId: "f1-packing",
+    storageBucket: "f1-packing.firebasestorage.app",
+    messagingSenderId: "550475930374",
+    appId: "1:550475930374:web:b63c0e496eaf25a4d31c87"
+  };
+
+  // Initialize Firebase
+  // const app = initializeApp(firebaseConfig);
 // ==============================
 
 // A fixed document path all your devices read/write to.
