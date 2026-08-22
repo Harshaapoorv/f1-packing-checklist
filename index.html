@@ -147,21 +147,34 @@
   }
   .item{
     display:flex;
-    align-items:flex-start;
-    gap:12px;
+    align-items:center;
+    gap:10px;
     padding:11px 4px;
     border-bottom:1px solid var(--line);
-    cursor:pointer;
     -webkit-tap-highlight-color:transparent;
   }
   .item:active{background:var(--accent-soft);}
+  .cb-unit{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    flex:0 0 auto;
+    cursor:pointer;
+  }
+  .cb-label{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:0.58rem;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
   .checkbox{
-    flex:0 0 22px;
-    width:22px;
-    height:22px;
+    flex:0 0 20px;
+    width:20px;
+    height:20px;
     border:1.5px solid var(--ink);
     border-radius:5px;
-    margin-top:2px;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -171,9 +184,13 @@
     background:var(--accent);
     border-color:var(--accent);
   }
+  .checkbox.avail-checked{
+    background:var(--gold);
+    border-color:var(--gold);
+  }
   .checkbox svg{
-    width:13px;
-    height:13px;
+    width:12px;
+    height:12px;
     opacity:0;
     transition:opacity .15s ease;
   }
@@ -224,6 +241,10 @@
     background:#f2e6d6;
     color:var(--gold);
   }
+  .item-buy.unavail{
+    background:#f5dcd9;
+    color:#a13d34;
+  }
   footer{
     position:fixed;
     bottom:0;
@@ -231,20 +252,27 @@
     right:0;
     background:var(--card);
     border-top:1px solid var(--line);
-    padding:12px 20px;
+    padding:12px 16px;
     display:flex;
     justify-content:center;
-    gap:10px;
+    gap:8px;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    flex-wrap:wrap;
   }
   footer button{
-    font-size:0.75rem;
-    padding:9px 16px;
+    font-size:0.72rem;
+    padding:8px 12px;
     border-radius:20px;
     border:1px solid var(--line);
     background:var(--paper);
     color:var(--ink);
     cursor:pointer;
+    white-space:nowrap;
+  }
+  footer button.on{
+    background:var(--ink);
+    color:var(--paper);
+    border-color:var(--ink);
   }
   footer button:active{background:var(--accent-soft);}
   .empty-note{
@@ -277,7 +305,8 @@
 
 <footer>
   <button id="resetBtn">Reset all</button>
-  <button id="checkedOnlyBtn">Show unpacked only</button>
+  <button id="unpackedOnlyBtn">Unpacked only</button>
+  <button id="unavailOnlyBtn">Unavailable only</button>
 </footer>
 
 <script>
@@ -480,33 +509,14 @@ const DATA = [
 // ====== FIREBASE CONFIG ======
 // Replace this with the config object from your Firebase project
 // (Project settings -> General -> Your apps -> SDK setup and configuration)
-// const firebaseConfig = {
-//   apiKey: "YOUR_API_KEY",
-//   authDomain: "YOUR_PROJECT.firebaseapp.com",
-//   projectId: "YOUR_PROJECT_ID",
-//   storageBucket: "YOUR_PROJECT.appspot.com",
-//   messagingSenderId: "YOUR_SENDER_ID",
-//   appId: "YOUR_APP_ID"
-// };
-  // <script type="module">
-  // Import the functions you need from the SDKs you need
-  // import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyDDfBm8NIu-riVFkkkp8vv3k93QeX4K6fg",
-    authDomain: "f1-packing.firebaseapp.com",
-    databaseURL: "https://f1-packing-default-rtdb.firebaseio.com",
-    projectId: "f1-packing",
-    storageBucket: "f1-packing.firebasestorage.app",
-    messagingSenderId: "550475930374",
-    appId: "1:550475930374:web:b63c0e496eaf25a4d31c87"
-  };
-
-  // Initialize Firebase
-  // const app = initializeApp(firebaseConfig);
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
 // ==============================
 
 // A fixed document path all your devices read/write to.
@@ -517,10 +527,19 @@ let db = null;
 let docRef = null;
 let firebaseReady = false;
 
-const STORAGE_KEY = "f1-packing-checked";
-let checked = {};
+const STORAGE_KEY = "f1-packing-checked-v2";
+let checked = {}; // checked[id] = { available: bool, packed: bool }
 let activeCat = "All";
 let showUnpackedOnly = false;
+let showUnavailOnly = false;
+
+function getState(id){
+  return checked[id] || { available: false, packed: false };
+}
+function setState(id, patch){
+  const cur = getState(id);
+  checked[id] = Object.assign({}, cur, patch);
+}
 
 function setSyncStatus(state, text){
   const dot = document.getElementById("syncDot");
@@ -563,8 +582,8 @@ function itemId(cat, name){
 function totalCount(){
   return DATA.reduce((s,c)=>s+c.items.length,0);
 }
-function checkedCount(){
-  return Object.values(checked).filter(Boolean).length;
+function packedCount(){
+  return Object.values(checked).filter(v=>v && v.packed).length;
 }
 
 function loadLocalFallback(){
@@ -611,7 +630,9 @@ function render(){
   catsToShow.forEach(cat=>{
     const visibleItems = cat.items.filter(it=>{
       const id = itemId(cat.cat, it[0]);
-      if(showUnpackedOnly && checked[id]) return false;
+      const st = getState(id);
+      if(showUnpackedOnly && st.packed) return false;
+      if(showUnavailOnly && st.available) return false;
       return true;
     });
     if(visibleItems.length === 0) return;
@@ -620,7 +641,7 @@ function render(){
     const section = document.createElement("div");
     section.className = "section";
 
-    const catDoneCount = cat.items.filter(it=>checked[itemId(cat.cat,it[0])]).length;
+    const catDoneCount = cat.items.filter(it=>getState(itemId(cat.cat,it[0])).packed).length;
 
     const title = document.createElement("div");
     title.className = "section-title";
@@ -630,33 +651,62 @@ function render(){
     visibleItems.forEach(it=>{
       const [name, qty, place, note] = it;
       const id = itemId(cat.cat, name);
-      const isDone = !!checked[id];
+      const st = getState(id);
+      const isPacked = !!st.packed;
+      const isAvail = !!st.available;
 
       const row = document.createElement("div");
-      row.className = "item" + (isDone ? " done" : "");
-      row.onclick = ()=>{
-        checked[id] = !checked[id];
+      row.className = "item" + (isPacked ? " done" : "");
+
+      const availUnit = document.createElement("div");
+      availUnit.className = "cb-unit";
+      const availCb = document.createElement("div");
+      availCb.className = "checkbox" + (isAvail ? " avail-checked" : "");
+      availCb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+      const availLabel = document.createElement("span");
+      availLabel.className = "cb-label";
+      availLabel.textContent = "Have";
+      availUnit.appendChild(availCb);
+      availUnit.appendChild(availLabel);
+      availUnit.onclick = (e)=>{
+        e.stopPropagation();
+        setState(id, { available: !isAvail });
         saveState();
         render();
       };
 
-      const cb = document.createElement("div");
-      cb.className = "checkbox" + (isDone ? " checked" : "");
-      cb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+      const packUnit = document.createElement("div");
+      packUnit.className = "cb-unit";
+      const packCb = document.createElement("div");
+      packCb.className = "checkbox" + (isPacked ? " checked" : "");
+      packCb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+      const packLabel = document.createElement("span");
+      packLabel.className = "cb-label";
+      packLabel.textContent = "Packed";
+      packUnit.appendChild(packCb);
+      packUnit.appendChild(packLabel);
+      packUnit.onclick = (e)=>{
+        e.stopPropagation();
+        setState(id, { packed: !isPacked });
+        saveState();
+        render();
+      };
 
       const body = document.createElement("div");
       body.className = "item-body";
       const buyBadge = place === "US" ? `<span class="item-buy us">BUY IN US</span>` : `<span class="item-buy">PACK FROM IN</span>`;
+      const unavailBadge = !isAvail ? `<span class="item-buy unavail">NOT YET HAVE</span>` : "";
       body.innerHTML = `
         <div class="item-row">
           <span class="item-name">${name}</span>
           <span class="item-qty">${qty}</span>
         </div>
-        <div class="item-note">${buyBadge}${note ? note : ""}</div>
+        <div class="item-note">${buyBadge}${unavailBadge}${note ? note : ""}</div>
       `;
 
-      row.appendChild(cb);
+      row.appendChild(availUnit);
       row.appendChild(body);
+      row.appendChild(packUnit);
       section.appendChild(row);
     });
 
@@ -666,18 +716,19 @@ function render(){
   if(!anyRendered){
     const empty = document.createElement("div");
     empty.className = "empty-note";
-    empty.textContent = "Everything here is packed. Nice work.";
+    empty.textContent = "Nothing matches this filter. Nice work.";
     main.appendChild(empty);
   }
 
   const total = totalCount();
-  const done = checkedCount();
+  const done = packedCount();
   const pct = total ? Math.round((done/total)*100) : 0;
   document.getElementById("progressFill").style.width = pct + "%";
   document.getElementById("progressText").textContent = `${done} / ${total} packed`;
   document.getElementById("progressPct").textContent = pct + "%";
-  document.getElementById("subtitle").textContent = "For your F1 travel \u2014 tap items as you pack them";
-  document.getElementById("checkedOnlyBtn").textContent = showUnpackedOnly ? "Show all items" : "Show unpacked only";
+  document.getElementById("subtitle").textContent = "For your F1 travel \u2014 mark what you have, then what's packed";
+  document.getElementById("unpackedOnlyBtn").classList.toggle("on", showUnpackedOnly);
+  document.getElementById("unavailOnlyBtn").classList.toggle("on", showUnavailOnly);
 }
 
 document.getElementById("resetBtn").onclick = ()=>{
@@ -687,8 +738,12 @@ document.getElementById("resetBtn").onclick = ()=>{
     render();
   }
 };
-document.getElementById("checkedOnlyBtn").onclick = ()=>{
+document.getElementById("unpackedOnlyBtn").onclick = ()=>{
   showUnpackedOnly = !showUnpackedOnly;
+  render();
+};
+document.getElementById("unavailOnlyBtn").onclick = ()=>{
+  showUnavailOnly = !showUnavailOnly;
   render();
 };
 
