@@ -566,6 +566,15 @@ async function initFirebase(){
     await firebase.auth().signInAnonymously();
     db = firebase.firestore();
     docRef = db.collection(DOC_PATH.split("/")[0]).doc(DOC_PATH.split("/")[1]);
+
+    // Make sure the document exists before we start using update(),
+    // since update() (unlike set) throws NOT_FOUND on a missing document.
+    const initialSnap = await docRef.get();
+    if(!initialSnap.exists){
+      await docRef.set({ checked: {}, updatedAt: Date.now() });
+      console.log("[sync] created missing document");
+    }
+
     firebaseReady = true;
     console.log("[sync] Firebase ready, listening on", DOC_PATH);
 
@@ -624,14 +633,16 @@ function saveLocal(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(checked)); }catch(e){}
 }
 
-// Writes ONLY the single item that changed, using a dot-path field merge.
-// This avoids the "last full write wins" problem where one device's stale
-// copy of the whole checklist could overwrite another device's recent change.
+// Writes ONLY the single item that changed, using a Firestore dot-path
+// field update. NOTE: this dot-notation trick only works with update(),
+// not with set(data, {merge:true}) - set-merge treats a dotted string key
+// as a literal top-level field name rather than a nested path, so it
+// silently writes to the wrong place and the checklist never reflects it.
 async function syncItem(id, itemState){
   if(!firebaseReady || !docRef) return;
   try{
     const fieldPath = "checked." + id;
-    await docRef.set({ [fieldPath]: itemState, updatedAt: Date.now() }, { merge: true });
+    await docRef.update({ [fieldPath]: itemState, updatedAt: Date.now() });
     console.log("[sync] wrote item", id, itemState);
   }catch(e){
     console.error("[sync] write failed for", id, e);
