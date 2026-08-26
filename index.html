@@ -49,22 +49,28 @@
     letter-spacing:0.08em;
   }
   .sync-status{
-    display:inline-flex;
+    display:flex;
     align-items:center;
     gap:5px;
     font-size:0.72rem;
     margin-top:8px;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
     color:var(--muted);
+    flex-wrap:wrap;
   }
   .sync-dot{
     width:7px;
     height:7px;
     border-radius:50%;
     background:var(--muted);
+    flex:0 0 auto;
   }
   .sync-dot.ok{background:var(--accent);}
   .sync-dot.err{background:#b0403a;}
+  .sync-meta{
+    color:var(--muted);
+    opacity:0.75;
+  }
   .progress-wrap{
     margin-top:14px;
   }
@@ -289,7 +295,10 @@
 <header>
   <h1>F1 Packing Checklist</h1>
   <p id="subtitle">Loading&hellip;</p>
-  <div class="sync-status"><span class="sync-dot" id="syncDot"></span><span id="syncText">Connecting&hellip;</span></div>
+  <div class="sync-status">
+    <span class="sync-dot" id="syncDot"></span><span id="syncText">Connecting&hellip;</span>
+    <span class="sync-meta" id="syncMeta"></span>
+  </div>
   <div class="progress-wrap">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-label">
@@ -507,22 +516,18 @@ const DATA = [
 ];
 
 // ====== FIREBASE CONFIG ======
-// Replace this with the config object from your Firebase project
-// (Project settings -> General -> Your apps -> SDK setup and configuration)
 const firebaseConfig = {
-    apiKey: "AIzaSyDDfBm8NIu-riVFkkkp8vv3k93QeX4K6fg",
-    authDomain: "f1-packing.firebaseapp.com",
-    databaseURL: "https://f1-packing-default-rtdb.firebaseio.com",
-    projectId: "f1-packing",
-    storageBucket: "f1-packing.firebasestorage.app",
-    messagingSenderId: "550475930374",
-    appId: "1:550475930374:web:b63c0e496eaf25a4d31c87"
-  };
-
+  apiKey: "AIzaSyDDfBm8NIu-riVFkkkp8vv3k93QeX4K6fg",
+  authDomain: "f1-packing.firebaseapp.com",
+  databaseURL: "https://f1-packing-default-rtdb.firebaseio.com",
+  projectId: "f1-packing",
+  storageBucket: "f1-packing.firebasestorage.app",
+  messagingSenderId: "550475930374",
+  appId: "1:550475930374:web:b63c0e496eaf25a4d31c87"
+};
 // ==============================
 
 // A fixed document path all your devices read/write to.
-// Change this string to anything private-ish if you want a bit of obscurity.
 const DOC_PATH = "packingLists/f1-checklist-harsha";
 
 let db = null;
@@ -541,6 +546,7 @@ function getState(id){
 function setState(id, patch){
   const cur = getState(id);
   checked[id] = Object.assign({}, cur, patch);
+  return checked[id];
 }
 
 function setSyncStatus(state, text){
@@ -550,6 +556,10 @@ function setSyncStatus(state, text){
   label.textContent = text;
 }
 
+function setSyncMeta(text){
+  document.getElementById("syncMeta").textContent = text;
+}
+
 async function initFirebase(){
   try{
     firebase.initializeApp(firebaseConfig);
@@ -557,21 +567,36 @@ async function initFirebase(){
     db = firebase.firestore();
     docRef = db.collection(DOC_PATH.split("/")[0]).doc(DOC_PATH.split("/")[1]);
     firebaseReady = true;
+    console.log("[sync] Firebase ready, listening on", DOC_PATH);
 
-    // Live sync: any device's change reflects here automatically
-    docRef.onSnapshot(snap=>{
+    // Live sync: any device's change reflects here automatically.
+    // includeMetadataChanges lets us tell cached vs server-confirmed data apart.
+    docRef.onSnapshot({ includeMetadataChanges: true }, snap=>{
+      const fromCache = snap.metadata.fromCache;
+      const hasPendingWrites = snap.metadata.hasPendingWrites;
+      console.log("[sync] snapshot received. fromCache:", fromCache, "pendingWrites:", hasPendingWrites, "exists:", snap.exists);
+
       if(snap.exists){
         const data = snap.data();
         checked = data.checked || {};
         render();
       }
-      setSyncStatus("ok", "Synced");
+
+      if(fromCache){
+        setSyncStatus("", "Showing cached data");
+        setSyncMeta("waiting for server confirmation\u2026");
+      }else{
+        setSyncStatus("ok", "Synced");
+        const t = snap.data() && snap.data().updatedAt;
+        setSyncMeta(t ? ("last update " + new Date(t).toLocaleTimeString()) : "");
+      }
     }, err=>{
-      console.error(err);
+      console.error("[sync] onSnapshot error:", err);
       setSyncStatus("err", "Sync error - using local copy");
+      setSyncMeta(err.code || "");
     });
   }catch(e){
-    console.error("Firebase init failed", e);
+    console.error("[sync] Firebase init failed", e);
     setSyncStatus("err", "Offline - saving on this device only");
     firebaseReady = false;
   }
@@ -595,17 +620,32 @@ function loadLocalFallback(){
   }catch(e){ checked = {}; }
 }
 
-async function saveState(){
-  // Always keep a local copy so the page still works offline
+function saveLocal(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(checked)); }catch(e){}
+}
 
-  if(firebaseReady && docRef){
-    try{
-      await docRef.set({ checked: checked, updatedAt: Date.now() }, { merge: false });
-    }catch(e){
-      console.error("Cloud save failed", e);
-      setSyncStatus("err", "Save failed - retry when online");
-    }
+// Writes ONLY the single item that changed, using a dot-path field merge.
+// This avoids the "last full write wins" problem where one device's stale
+// copy of the whole checklist could overwrite another device's recent change.
+async function syncItem(id, itemState){
+  if(!firebaseReady || !docRef) return;
+  try{
+    const fieldPath = "checked." + id;
+    await docRef.set({ [fieldPath]: itemState, updatedAt: Date.now() }, { merge: true });
+    console.log("[sync] wrote item", id, itemState);
+  }catch(e){
+    console.error("[sync] write failed for", id, e);
+    setSyncStatus("err", "Save failed - retry when online");
+    setSyncMeta(e.code || "");
+  }
+}
+
+async function syncFullReset(){
+  if(!firebaseReady || !docRef) return;
+  try{
+    await docRef.set({ checked: {}, updatedAt: Date.now() }, { merge: false });
+  }catch(e){
+    console.error("[sync] reset failed", e);
   }
 }
 
@@ -672,9 +712,10 @@ function render(){
       availUnit.appendChild(availLabel);
       availUnit.onclick = (e)=>{
         e.stopPropagation();
-        setState(id, { available: !isAvail });
-        saveState();
+        const newState = setState(id, { available: !isAvail });
+        saveLocal();
         render();
+        syncItem(id, newState);
       };
 
       const packUnit = document.createElement("div");
@@ -689,9 +730,10 @@ function render(){
       packUnit.appendChild(packLabel);
       packUnit.onclick = (e)=>{
         e.stopPropagation();
-        setState(id, { packed: !isPacked });
-        saveState();
+        const newState = setState(id, { packed: !isPacked });
+        saveLocal();
         render();
+        syncItem(id, newState);
       };
 
       const body = document.createElement("div");
@@ -736,8 +778,9 @@ function render(){
 document.getElementById("resetBtn").onclick = ()=>{
   if(confirm("Reset all checked items?")){
     checked = {};
-    saveState();
+    saveLocal();
     render();
+    syncFullReset();
   }
 };
 document.getElementById("unpackedOnlyBtn").onclick = ()=>{
